@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../../core/validators.dart';
 import '../model/health_record.dart';
 import '../viewmodel/record_viewmodel.dart';

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import '../../../core/app_theme.dart';
 import '../viewmodel/record_viewmodel.dart';
 import '../widgets/metric_card.dart';
+import 'goals_screen.dart';
+import 'reminders_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -16,7 +17,27 @@ class DashboardScreen extends StatelessWidget {
     final nf = NumberFormat.decimalPattern();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('HealthMate')),
+      appBar: AppBar(
+        title: const Text('HealthMate'),
+        actions: [
+          IconButton(
+            tooltip: 'Daily reminders',
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RemindersScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Daily goals',
+            icon: const Icon(Icons.flag_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GoalsScreen()),
+            ),
+          ),
+        ],
+      ),
       body: vm.loading && vm.records.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -39,7 +60,8 @@ class DashboardScreen extends StatelessWidget {
                   color: AppColors.steps,
                   label: 'Steps',
                   value: nf.format(t.steps),
-                  progress: t.steps / RecordViewModel.stepsGoal,
+                  goal: '${nf.format(vm.goals.steps)} goal',
+                  progress: t.steps / vm.goals.steps,
                 ),
                 const SizedBox(height: 12),
                 MetricCard(
@@ -47,7 +69,8 @@ class DashboardScreen extends StatelessWidget {
                   color: AppColors.calories,
                   label: 'Calories burned',
                   value: '${nf.format(t.calories)} kcal',
-                  progress: t.calories / RecordViewModel.caloriesGoal,
+                  goal: '${nf.format(vm.goals.calories)} kcal goal',
+                  progress: t.calories / vm.goals.calories,
                 ),
                 const SizedBox(height: 12),
                 MetricCard(
@@ -55,13 +78,17 @@ class DashboardScreen extends StatelessWidget {
                   color: AppColors.water,
                   label: 'Water intake',
                   value: '${nf.format(t.water)} ml',
-                  progress: t.water / RecordViewModel.waterGoal,
+                  goal: '${nf.format(vm.goals.water)} ml goal',
+                  progress: t.water / vm.goals.water,
                 ),
                 const SizedBox(height: 24),
                 Text('Last 7 days – steps',
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
-                _WeeklyChart(days: vm.lastSevenDays),
+                _WeeklyChart(
+                  days: vm.lastSevenDays,
+                  stepsGoal: vm.goals.steps,
+                ),
               ],
             ),
     );
@@ -71,13 +98,14 @@ class DashboardScreen extends StatelessWidget {
 /// Simple bar chart built from containers (no extra chart dependency).
 class _WeeklyChart extends StatelessWidget {
   final List<MapEntry<DateTime, DayTotals>> days;
-  const _WeeklyChart({required this.days});
+  final int stepsGoal;
+  const _WeeklyChart({required this.days, required this.stepsGoal});
 
   @override
   Widget build(BuildContext context) {
     final maxSteps = days
         .map((e) => e.value.steps)
-        .fold<int>(RecordViewModel.stepsGoal, (a, b) => b > a ? b : a);
+        .fold<int>(stepsGoal, (a, b) => b > a ? b : a);
     return SizedBox(
       height: 150,
       child: Row(

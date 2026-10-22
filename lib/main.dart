@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/app_theme.dart';
+import 'core/notifications/reminder_service.dart';
 import 'features/records/repository/sqlite_health_record_repository.dart';
 import 'features/records/view/home_shell.dart';
 import 'features/records/viewmodel/record_viewmodel.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ReminderService.instance.initialize();
   runApp(const HealthMateApp());
 }
 

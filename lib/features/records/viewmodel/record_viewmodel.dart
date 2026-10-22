@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-
+import '../../../core/database/database_helper.dart';
 import '../model/health_record.dart';
 import '../repository/health_record_repository.dart';
 
@@ -11,12 +11,47 @@ class DayTotals {
   const DayTotals(this.steps, this.calories, this.water);
 }
 
+class DailyGoals {
+  final int steps;
+  final int calories;
+  final int water;
+
+  const DailyGoals({
+    this.steps = 10000,
+    this.calories = 500,
+    this.water = 2500,
+  });
+}
+
+class ReminderSettings {
+  final bool waterEnabled;
+  final int waterMinutes;
+  final bool walkingEnabled;
+  final int walkingMinutes;
+  final bool activityEnabled;
+  final int activityMinutes;
+
+  const ReminderSettings({
+    this.waterEnabled = false,
+    this.waterMinutes = 600,
+    this.walkingEnabled = false,
+    this.walkingMinutes = 1020,
+    this.activityEnabled = false,
+    this.activityMinutes = 1200,
+  });
+
+  Map<String, int> toMap() => {
+        'waterEnabled': waterEnabled ? 1 : 0,
+        'waterMinutes': waterMinutes,
+        'walkingEnabled': walkingEnabled ? 1 : 0,
+        'walkingMinutes': walkingMinutes,
+        'activityEnabled': activityEnabled ? 1 : 0,
+        'activityMinutes': activityMinutes,
+      };
+}
+
 /// Holds UI state and talks to the repository (MVVM + Provider).
 class RecordViewModel extends ChangeNotifier {
-  static const stepsGoal = 10000;
-  static const caloriesGoal = 500;
-  static const waterGoal = 2500;
-
   final HealthRecordRepository _repo;
   RecordViewModel(this._repo);
 
@@ -24,10 +59,14 @@ class RecordViewModel extends ChangeNotifier {
   DateTime? _filterDate;
   bool _loading = false;
   String? _error;
+  DailyGoals _goals = const DailyGoals();
+  ReminderSettings _reminders = const ReminderSettings();
 
   bool get loading => _loading;
   String? get error => _error;
   DateTime? get filterDate => _filterDate;
+  DailyGoals get goals => _goals;
+  ReminderSettings get reminders => _reminders;
 
   static String format(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
@@ -60,6 +99,35 @@ class RecordViewModel extends ChangeNotifier {
 
   Future<void> loadRecords() => _run(() async {
         _records = await _repo.getAll();
+        final savedGoals = await DatabaseHelper.instance.getGoals();
+        _goals = DailyGoals(
+          steps: savedGoals['steps']!,
+          calories: savedGoals['calories']!,
+          water: savedGoals['water']!,
+        );
+        final savedReminders = await DatabaseHelper.instance.getReminders();
+        _reminders = ReminderSettings(
+          waterEnabled: savedReminders['waterEnabled'] == 1,
+          waterMinutes: savedReminders['waterMinutes']!,
+          walkingEnabled: savedReminders['walkingEnabled'] == 1,
+          walkingMinutes: savedReminders['walkingMinutes']!,
+          activityEnabled: savedReminders['activityEnabled'] == 1,
+          activityMinutes: savedReminders['activityMinutes']!,
+        );
+      });
+
+  Future<void> saveGoals(DailyGoals goals) => _run(() async {
+        await DatabaseHelper.instance.saveGoals(
+          steps: goals.steps,
+          calories: goals.calories,
+          water: goals.water,
+        );
+        _goals = goals;
+      });
+
+  Future<void> saveReminders(ReminderSettings reminders) => _run(() async {
+        await DatabaseHelper.instance.saveReminders(reminders.toMap());
+        _reminders = reminders;
       });
 
   Future<void> addRecord(HealthRecord r) => _run(() async {

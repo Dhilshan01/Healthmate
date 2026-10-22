@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import '../../../core/app_theme.dart';
 import '../model/health_record.dart';
 import '../viewmodel/record_viewmodel.dart';

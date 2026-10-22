@@ -6,6 +6,7 @@ class MetricCard extends StatelessWidget {
   final Color color;
   final String label;
   final String value;
+  final String? goal;
   final double progress; // 0..1
 
   const MetricCard({
@@ -14,6 +15,7 @@ class MetricCard extends StatelessWidget {
     required this.color,
     required this.label,
     required this.value,
+    this.goal,
     required this.progress,
   });
 
@@ -40,6 +42,8 @@ class MetricCard extends StatelessWidget {
                           .textTheme
                           .headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold)),
+                  if (goal != null)
+                    Text(goal!, style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
                     value: progress.clamp(0.0, 1.0),

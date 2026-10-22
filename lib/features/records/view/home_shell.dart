@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'dashboard_screen.dart';
 import 'record_form_screen.dart';
 import 'record_list_screen.dart';
