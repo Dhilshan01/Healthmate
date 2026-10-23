@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/app_theme.dart';
+import 'achievements_screen.dart';
+import 'bmi_calculator_screen.dart';
 import 'goals_screen.dart';
 import 'reminders_screen.dart';
 
@@ -24,6 +26,24 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'Steps, calories, and water targets',
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const GoalsScreen())),
+            ),
+            const SizedBox(height: 12),
+            _SettingTile(
+              icon: Icons.emoji_events_outlined,
+              color: const Color(0xFFE18A00),
+              title: 'Achievements',
+              subtitle: 'Badges, streaks, and fitness milestones',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const AchievementsScreen())),
+            ),
+            const SizedBox(height: 12),
+            _SettingTile(
+              icon: Icons.calculate_outlined,
+              color: AppColors.seed,
+              title: 'BMI calculator',
+              subtitle: 'Calculate BMI from height and weight',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const BmiCalculatorScreen())),
             ),
             const SizedBox(height: 12),
             _SettingTile(

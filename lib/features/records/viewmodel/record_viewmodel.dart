@@ -75,6 +75,9 @@ class RecordViewModel extends ChangeNotifier {
       ? List.unmodifiable(_records)
       : _records.where((r) => r.date == format(_filterDate!)).toList();
 
+  /// All saved records, independent of the history screen's date filter.
+  List<HealthRecord> get allRecords => List.unmodifiable(_records);
+
   List<HealthRecord> get _todayRecords =>
       _records.where((r) => r.date == format(DateTime.now())).toList();
 
