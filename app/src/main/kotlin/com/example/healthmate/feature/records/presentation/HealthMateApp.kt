@@ -44,7 +44,7 @@ private object Route { const val HOME = "home"; const val HISTORY = "history"; c
         composable(Route.SETTINGS) { Shell(nav, 3) { Settings(open = { nav.navigate(it) }, back = { nav.popBackStack() }) } }
         composable(Route.PROFILE) { Profile(state.profile, { viewModel.saveProfile(it); nav.popBackStack() }, { nav.popBackStack() }) }
         composable(Route.ACHIEVEMENTS) { Achievements(state.records, state.goals, { nav.popBackStack() }) }
-        composable(Route.BMI) { Bmi({ nav.popBackStack() }) }
+        composable(Route.BMI) { BmiCalculator(state.profile, { nav.popBackStack() }) }
         composable(Route.REMINDERS) { Reminders(state.reminders, { s -> viewModel.saveReminders(s); nav.popBackStack() }, { nav.popBackStack() }) }
     }
 }
@@ -140,6 +140,26 @@ private object Route { const val HOME = "home"; const val HISTORY = "history"; c
 
 @Composable private fun Bmi(back: () -> Unit) { var height by remember { mutableStateOf("") }; var weight by remember { mutableStateOf("") }; var bmi by remember { mutableStateOf<Double?>(null) }; var error by remember { mutableStateOf<String?>(null) }
     Scaffold(topBar = { BackBar("BMI calculator", back) }) { p -> Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { Text("Check your body mass index", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text("Enter your height and weight to calculate your BMI."); Input(height, { height = it }, "Height (cm)", KeyboardType.Decimal); Input(weight, { weight = it }, "Weight (kg)", KeyboardType.Decimal); Button({ val h = height.toDoubleOrNull(); val w = weight.toDoubleOrNull(); if (h == null || w == null || h !in 50.0..300.0 || w !in 10.0..500.0) error = "Height must be 50–300 cm and weight 10–500 kg." else { error = null; bmi = w / ((h / 100) * (h / 100)) } }, Modifier.fillMaxWidth()) { Text("Calculate BMI") }; error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; bmi?.let { value -> val (label, color) = when { value < 18.5 -> "Underweight" to HealthColors.Water; value < 25 -> "Healthy range" to HealthColors.Steps; value < 30 -> "Overweight" to Color(0xFFE18A00); else -> "Obesity range" to HealthColors.Calories }; Card(colors = CardDefaults.cardColors(containerColor = color.copy(alpha = .12f))) { Column(Modifier.padding(22.dp)) { Text(label, color = color, fontWeight = FontWeight.Bold); Text("%.1f".format(value), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold); Text("Your BMI") } } }; Spacer(Modifier.height(4.dp)); Text("BMI is a screening measure and does not diagnose body fat or health on its own.", style = MaterialTheme.typography.bodySmall) } }
+}
+
+@Composable private fun BmiCalculator(profile: UserProfile, back: () -> Unit) {
+    var height by remember(profile.heightCm) { mutableStateOf(profile.heightCm?.let { "%.1f".format(it) }.orEmpty()) }
+    var weight by remember(profile.weightKg) { mutableStateOf(profile.weightKg?.let { "%.1f".format(it) }.orEmpty()) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val h = height.toDoubleOrNull(); val w = weight.toDoubleOrNull()
+    val bmi = if (h != null && w != null && h in 50.0..300.0 && w in 10.0..500.0) w / ((h / 100) * (h / 100)) else null
+    val result = bmi?.let { value -> when { value < 18.5 -> Triple("Underweight", "A little below the usual range", HealthColors.Water); value < 25 -> Triple("Healthy range", "Within the usual BMI range", HealthColors.Steps); value < 30 -> Triple("Overweight", "Above the usual BMI range", Color(0xFFE18A00)); else -> Triple("Obesity range", "Well above the usual BMI range", HealthColors.Calories) } }
+    Scaffold(topBar = { BackBar("BMI calculator", back) }) { padding -> LazyColumn(Modifier.padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item { Text("Body mass index", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text("A quick screening calculation based on height and weight.", color = Color(0xFF59658C)) }
+        if (profile.heightCm != null && profile.weightKg != null) item { Card(colors = CardDefaults.cardColors(containerColor = HealthColors.Seed.copy(alpha = .10f))) { Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Person, null, tint = HealthColors.Seed); Spacer(Modifier.width(12.dp)); Text("Values prefilled from your profile") } } }
+        item { Input(height, { height = it; error = null }, "Height (cm)", KeyboardType.Decimal) }
+        item { Input(weight, { weight = it; error = null }, "Weight (kg)", KeyboardType.Decimal) }
+        item { Button({ if (bmi == null) error = "Enter height from 50 to 300 cm and weight from 10 to 500 kg." else error = null }, Modifier.fillMaxWidth()) { Text("Calculate BMI") } }
+        error?.let { message -> item { Text(message, color = MaterialTheme.colorScheme.error) } }
+        result?.let { (label, description, color) -> item { Card(colors = CardDefaults.cardColors(containerColor = color.copy(alpha = .12f))) { Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text(label, color = color, fontWeight = FontWeight.Bold); Text("%.1f".format(bmi), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold); Text(description); Text("BMI", style = MaterialTheme.typography.labelLarge, color = Color(0xFF59658C)) } } } }
+        item { Card { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { Text("BMI ranges", fontWeight = FontWeight.Bold); Text("Below 18.5: Underweight\n18.5-24.9: Healthy range\n25.0-29.9: Overweight\n30.0 and above: Obesity range", style = MaterialTheme.typography.bodySmall, color = Color(0xFF59658C)) } } }
+        item { Text("BMI is a screening measure and does not diagnose body fat or health on its own.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF59658C)) }
+    } }
 }
 
 @Composable private fun Achievements(records: List<HealthRecord>, goals: DailyGoals, back: () -> Unit) { val totalSteps = records.sumOf { it.steps }; val totalWater = records.sumOf { it.water }; val days = records.groupBy { it.date }.mapValues { (_, r) -> Triple(r.sumOf { it.steps }, r.sumOf { it.calories }, r.sumOf { it.water }) }; val goalDays = days.values.count { it.first >= goals.steps || it.second >= goals.calories || it.third >= goals.water }; var streak = 0; var day = LocalDate.now(); while (days[day.toString()]?.let { it.first >= goals.steps || it.second >= goals.calories || it.third >= goals.water } == true) { streak++; day = day.minusDays(1) }
