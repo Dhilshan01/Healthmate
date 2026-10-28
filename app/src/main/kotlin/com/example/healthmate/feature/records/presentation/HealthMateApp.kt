@@ -32,7 +32,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-private object Route { const val HOME = "home"; const val HISTORY = "history"; const val FORM = "form"; const val GOALS = "goals"; const val SETTINGS = "settings"; const val ACHIEVEMENTS = "achievements"; const val BMI = "bmi"; const val REMINDERS = "reminders" }
+private object Route { const val HOME = "home"; const val HISTORY = "history"; const val FORM = "form"; const val GOALS = "goals"; const val SETTINGS = "settings"; const val ACHIEVEMENTS = "achievements"; const val BMI = "bmi"; const val REMINDERS = "reminders"; const val PROFILE = "profile" }
 
 @Composable fun HealthMateApp(viewModel: HealthViewModel) {
     val nav = rememberNavController(); val state by viewModel.state.collectAsStateWithLifecycle()
@@ -42,6 +42,7 @@ private object Route { const val HOME = "home"; const val HISTORY = "history"; c
         composable("${Route.FORM}?id={id}", arguments = listOf(navArgument("id") { type = NavType.LongType; defaultValue = 0L })) { entry -> Shell(nav, 2) { RecordForm(state.records.firstOrNull { it.id == entry.arguments?.getLong("id") }, onBack = { nav.popBackStack() }, onSave = { r -> if (r.id == 0L) viewModel.add(LocalDate.parse(r.date), r.steps, r.calories, r.water) else viewModel.update(r); nav.popBackStack() }) } }
         composable(Route.GOALS) { Goals(state.goals, { viewModel.saveGoals(it); nav.popBackStack() }, { nav.popBackStack() }) }
         composable(Route.SETTINGS) { Shell(nav, 3) { Settings(open = { nav.navigate(it) }, back = { nav.popBackStack() }) } }
+        composable(Route.PROFILE) { Profile(state.profile, { viewModel.saveProfile(it); nav.popBackStack() }, { nav.popBackStack() }) }
         composable(Route.ACHIEVEMENTS) { Achievements(state.records, state.goals, { nav.popBackStack() }) }
         composable(Route.BMI) { Bmi({ nav.popBackStack() }) }
         composable(Route.REMINDERS) { Reminders(state.reminders, { s -> viewModel.saveReminders(s); nav.popBackStack() }, { nav.popBackStack() }) }
@@ -98,8 +99,40 @@ private object Route { const val HOME = "home"; const val HISTORY = "history"; c
 
 @Composable private fun Input(value: String, change: (String) -> Unit, label: String, type: KeyboardType = KeyboardType.Text) = OutlinedTextField(value, change, label = { Text(label) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = type), singleLine = true, modifier = Modifier.fillMaxWidth())
 
-@Composable private fun Settings(open: (String) -> Unit, back: () -> Unit) = Scaffold(topBar = { TopAppBar(title = { Text("Settings") }, navigationIcon = { IconButton(back) { Icon(Icons.Filled.ArrowBack, "Back") } }, windowInsets = WindowInsets(0, 0, 0, 0)) }) { p -> LazyColumn(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { item { Text("Make HealthMate fit your routine.", style = MaterialTheme.typography.titleMedium) }; item { SettingItem("Daily goals", "Steps, calories, and water targets", Icons.Outlined.Flag, HealthColors.Steps) { open(Route.GOALS) } }; item { SettingItem("Achievements", "Badges, streaks, and fitness milestones", Icons.Outlined.EmojiEvents, Color(0xFFE18A00)) { open(Route.ACHIEVEMENTS) } }; item { SettingItem("BMI calculator", "Calculate BMI from height and weight", Icons.Outlined.Calculate, HealthColors.Seed) { open(Route.BMI) } }; item { SettingItem("Reminders", "Water, walking, and activity prompts", Icons.Outlined.Notifications, HealthColors.Seed) { open(Route.REMINDERS) } } } }
+@Composable private fun Settings(open: (String) -> Unit, back: () -> Unit) = Scaffold(topBar = { TopAppBar(title = { Text("Settings") }, navigationIcon = { IconButton(back) { Icon(Icons.Filled.ArrowBack, "Back") } }, windowInsets = WindowInsets(0, 0, 0, 0)) }) { p -> LazyColumn(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { item { Text("Make HealthMate fit your routine.", style = MaterialTheme.typography.titleMedium) }; item { SettingItem("Your profile", "Age, height, weight, and preferences", Icons.Outlined.Person, HealthColors.Seed) { open(Route.PROFILE) } }; item { SettingItem("Daily goals", "Steps, calories, and water targets", Icons.Outlined.Flag, HealthColors.Steps) { open(Route.GOALS) } }; item { SettingItem("Achievements", "Badges, streaks, and fitness milestones", Icons.Outlined.EmojiEvents, Color(0xFFE18A00)) { open(Route.ACHIEVEMENTS) } }; item { SettingItem("BMI calculator", "Calculate BMI from height and weight", Icons.Outlined.Calculate, HealthColors.Seed) { open(Route.BMI) } }; item { SettingItem("Reminders", "Water, walking, and activity prompts", Icons.Outlined.Notifications, HealthColors.Seed) { open(Route.REMINDERS) } } } }
 @Composable private fun SettingItem(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, click: () -> Unit) = Card(Modifier.fillMaxWidth().clickable(onClick = click)) { Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) { Icon(icon, null, tint = color, modifier = Modifier.size(30.dp)); Spacer(Modifier.width(16.dp)); Column(Modifier.weight(1f)) { Text(title, fontWeight = FontWeight.Bold); Text(subtitle, style = MaterialTheme.typography.bodySmall) }; Icon(Icons.Filled.ChevronRight, null) } }
+
+@Composable private fun Profile(current: UserProfile, save: (UserProfile) -> Unit, back: () -> Unit) {
+    var age by remember(current) { mutableStateOf(current.age?.toString().orEmpty()) }
+    var height by remember(current) { mutableStateOf(current.heightCm?.toString().orEmpty()) }
+    var weight by remember(current) { mutableStateOf(current.weightKg?.toString().orEmpty()) }
+    var activity by remember(current) { mutableStateOf(current.activityLevel) }
+    var metric by remember(current) { mutableStateOf(current.useMetricUnits) }
+    var expanded by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val activityLevels = listOf("Sedentary", "Lightly active", "Moderately active", "Very active")
+    Scaffold(topBar = { BackBar("Your profile", back) }) { p ->
+        Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text("Personal details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text("These details stay on this device and help personalize HealthMate.", color = Color(0xFF59658C))
+            Input(age, { age = it }, "Age", KeyboardType.Number)
+            Input(height, { height = it }, "Height (cm)", KeyboardType.Decimal)
+            Input(weight, { weight = it }, "Weight (kg)", KeyboardType.Decimal)
+            Text("Preferences", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+                OutlinedTextField(activity, {}, Modifier.menuAnchor().fillMaxWidth(), readOnly = true, label = { Text("Activity level") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, singleLine = true)
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) { activityLevels.forEach { level -> DropdownMenuItem(text = { Text(level) }, onClick = { activity = level; expanded = false }) } }
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Use metric units", fontWeight = FontWeight.Bold); Text("Centimetres and kilograms", style = MaterialTheme.typography.bodySmall, color = Color(0xFF59658C)) }; Switch(metric, { metric = it }) }
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Button({
+                val parsedAge = age.toIntOrNull(); val parsedHeight = height.toDoubleOrNull(); val parsedWeight = weight.toDoubleOrNull()
+                if (parsedAge == null || parsedAge !in 1..120 || parsedHeight == null || parsedHeight !in 50.0..300.0 || parsedWeight == null || parsedWeight !in 10.0..500.0) error = "Enter an age from 1–120, height from 50–300 cm, and weight from 10–500 kg."
+                else { error = null; save(UserProfile(age = parsedAge, heightCm = parsedHeight, weightKg = parsedWeight, activityLevel = activity, useMetricUnits = metric)) }
+            }, Modifier.fillMaxWidth()) { Text("Save profile") }
+        }
+    }
+}
 
 @Composable private fun Goals(current: DailyGoals, save: (DailyGoals) -> Unit, back: () -> Unit) { var steps by remember { mutableStateOf(current.steps.toString()) }; var calories by remember { mutableStateOf(current.calories.toString()) }; var water by remember { mutableStateOf(current.water.toString()) }; var error by remember { mutableStateOf<String?>(null) }
     Scaffold(topBar = { BackBar("Daily goals", back) }) { p -> Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { Text("Set targets that fit your routine."); Input(steps, { steps = it }, "Steps goal", KeyboardType.Number); Input(calories, { calories = it }, "Calories goal", KeyboardType.Number); Input(water, { water = it }, "Water goal", KeyboardType.Number); error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; Button({ val s = steps.toIntOrNull(); val c = calories.toIntOrNull(); val w = water.toIntOrNull(); if (s == null || c == null || w == null || s !in 1..100000 || c !in 1..20000 || w !in 1..20000) error = "Goals must be whole numbers greater than zero within the allowed limits." else save(DailyGoals(steps = s, calories = c, water = w)) }, Modifier.fillMaxWidth()) { Text("Save goals") } } }
