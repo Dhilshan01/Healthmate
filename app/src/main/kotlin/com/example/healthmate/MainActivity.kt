@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.healthmate.core.design.HealthMateTheme
-import com.example.healthmate.feature.records.presentation.HealthMateApp
+import com.example.healthmate.app.HealthMateApp
 import com.example.healthmate.feature.records.presentation.HealthViewModel
 
 class MainActivity : ComponentActivity() {

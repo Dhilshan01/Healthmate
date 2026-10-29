@@ -3,6 +3,7 @@ package com.example.healthmate.feature.records.data
 import android.content.*
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.example.healthmate.core.database.HealthMateDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -18,14 +19,8 @@ data class UserProfile(
     val useMetricUnits: Boolean = true
 )
 
-private class HealthDatabase(context: Context) : SQLiteOpenHelper(context, "healthmate.db", null, 2) {
-    override fun onCreate(db: SQLiteDatabase) { db.execSQL("CREATE TABLE health_records (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, steps INTEGER NOT NULL, calories INTEGER NOT NULL, water INTEGER NOT NULL)"); db.execSQL("CREATE TABLE daily_goals (id INTEGER PRIMARY KEY, steps INTEGER NOT NULL, calories INTEGER NOT NULL, water INTEGER NOT NULL)"); db.execSQL("CREATE TABLE daily_reminders (id INTEGER PRIMARY KEY, waterEnabled INTEGER NOT NULL, waterMinutes INTEGER NOT NULL, walkingEnabled INTEGER NOT NULL, walkingMinutes INTEGER NOT NULL, activityEnabled INTEGER NOT NULL, activityMinutes INTEGER NOT NULL)"); createProfileTable(db) }
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) { if (oldVersion < 2) createProfileTable(db) }
-    private fun createProfileTable(db: SQLiteDatabase) { db.execSQL("CREATE TABLE IF NOT EXISTS user_profile (id INTEGER PRIMARY KEY, age INTEGER, heightCm REAL, weightKg REAL, activityLevel TEXT NOT NULL, useMetricUnits INTEGER NOT NULL)") }
-}
-
 class HealthRepository(context: Context) {
-    private val database = HealthDatabase(context.applicationContext)
+    private val database = HealthMateDatabase.getInstance(context.applicationContext)
     private val _records = MutableStateFlow(readRecords()); val records: StateFlow<List<HealthRecord>> = _records
     private val _goals = MutableStateFlow(readGoals()); val goals: StateFlow<DailyGoals> = _goals
     private val _reminders = MutableStateFlow(readReminders()); val reminders: StateFlow<ReminderSettings> = _reminders

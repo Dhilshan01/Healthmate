@@ -3,12 +3,11 @@ package com.example.healthmate.feature.records.presentation
 import android.app.Application
 import androidx.lifecycle.*
 import com.example.healthmate.feature.records.data.*
+import com.example.healthmate.feature.dashboard.presentation.HealthUiState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
-data class HealthUiState(val records: List<HealthRecord> = emptyList(), val goals: DailyGoals = DailyGoals(), val reminders: ReminderSettings = ReminderSettings(), val profile: UserProfile = UserProfile(), val loading: Boolean = true)
 
 class HealthViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = HealthRepository(application)
@@ -19,5 +18,4 @@ class HealthViewModel(application: Application) : AndroidViewModel(application) 
     fun saveGoals(goals: DailyGoals) = viewModelScope.launch { repository.saveGoals(goals) }
     fun saveReminders(settings: ReminderSettings) = viewModelScope.launch { repository.saveReminders(settings) }
     fun saveProfile(profile: UserProfile) = viewModelScope.launch { repository.saveProfile(profile) }
-    companion object { val dateFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE }
 }
