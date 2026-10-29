@@ -17,6 +17,7 @@ import com.example.healthmate.feature.common.presentation.BackBar
 import com.example.healthmate.feature.common.presentation.Input
 import com.example.healthmate.feature.records.data.UserProfile
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun BmiCalculator(profile: UserProfile, back: () -> Unit) {
     var height by remember(profile.heightCm) { mutableStateOf(profile.heightCm?.let { "%.1f".format(it) }.orEmpty()) }
     var weight by remember(profile.weightKg) { mutableStateOf(profile.weightKg?.let { "%.1f".format(it) }.orEmpty()) }
@@ -32,4 +33,6 @@ import com.example.healthmate.feature.records.data.UserProfile
         item { Button({ if (bmi == null) error = "Enter height from 50 to 300 cm and weight from 10 to 500 kg." else error = null }, Modifier.fillMaxWidth()) { Text("Calculate BMI") } }
         error?.let { message -> item { Text(message, color = MaterialTheme.colorScheme.error) } }
         result?.let { (label, description, color) -> item { Card(colors = CardDefaults.cardColors(containerColor = color.copy(alpha = .12f))) { Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text(label, color = color, fontWeight = FontWeight.Bold); Text("%.1f".format(bmi), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold); Text(description); Text("BMI", style = MaterialTheme.typography.labelLarge, color = Color(0xFF59658C)) } } } }
-
+    } }
+}
+

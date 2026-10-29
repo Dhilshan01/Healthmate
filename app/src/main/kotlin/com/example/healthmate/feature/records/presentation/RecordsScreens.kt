@@ -20,6 +20,7 @@ import com.example.healthmate.core.design.HealthColors
 import com.example.healthmate.feature.common.presentation.*
 import com.example.healthmate.feature.records.data.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun History(records: List<HealthRecord>, edit: (Long) -> Unit, delete: (HealthRecord) -> Unit) {
     var filter by remember { mutableStateOf("") }
     val shown = records.filter { filter.isBlank() || it.date.contains(filter) }
@@ -36,6 +37,7 @@ import com.example.healthmate.feature.records.data.*
     pending?.let { r -> AlertDialog(onDismissRequest = { pending = null }, title = { Text("Delete record?") }, text = { Text("The record for ${r.date} will be permanently removed.") }, confirmButton = { TextButton({ delete(r); pending = null }) { Text("Delete") } }, dismissButton = { TextButton({ pending = null }) { Text("Cancel") } }) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun RecordForm(record: HealthRecord?, onBack: () -> Unit, onSave: (HealthRecord) -> Unit) { var date by remember { mutableStateOf(record?.date ?: LocalDate.now().toString()) }; var steps by remember { mutableStateOf(record?.steps?.toString() ?: "") }; var calories by remember { mutableStateOf(record?.calories?.toString() ?: "") }; var water by remember { mutableStateOf(record?.water?.toString() ?: "") }; var error by remember { mutableStateOf<String?>(null) }
     Scaffold(topBar = { TopAppBar(title = { Text(if (record == null) "Add record" else "Edit record") }, navigationIcon = { IconButton(onBack) { Icon(Icons.Filled.ArrowBack, "Back") } }, windowInsets = WindowInsets(0, 0, 0, 0)) }) { p -> Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) { Input(date, { date = it }, "Date (yyyy-mm-dd)"); Input(steps, { steps = it }, "Steps", KeyboardType.Number); Input(calories, { calories = it }, "Calories burned (kcal)", KeyboardType.Number); Input(water, { water = it }, "Water intake (ml)", KeyboardType.Number); error?.let { Text(it, color = MaterialTheme.colorScheme.error) }; Button({ val s = steps.toIntOrNull(); val c = calories.toIntOrNull(); val w = water.toIntOrNull(); if (runCatching { LocalDate.parse(date) }.isFailure || s == null || c == null || w == null || s !in 0..100000 || c !in 0..20000 || w !in 0..20000) error = "Enter a valid date and non-negative values within the allowed limits." else onSave(HealthRecord(record?.id ?: 0, date, s, c, w)) }, Modifier.fillMaxWidth()) { Text(if (record == null) "Save" else "Update") } } }
 }

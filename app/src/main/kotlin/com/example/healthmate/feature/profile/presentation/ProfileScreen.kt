@@ -14,6 +14,7 @@ import com.example.healthmate.feature.common.presentation.BackBar
 import com.example.healthmate.feature.common.presentation.Input
 import com.example.healthmate.feature.records.data.UserProfile
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun Profile(current: UserProfile, save: (UserProfile) -> Unit, back: () -> Unit) {
     var age by remember(current) { mutableStateOf(current.age?.toString().orEmpty()) }
     var height by remember(current) { mutableStateOf(current.heightCm?.toString().orEmpty()) }
@@ -45,4 +46,4 @@ import com.example.healthmate.feature.records.data.UserProfile
         }
     }
 }
-
+
