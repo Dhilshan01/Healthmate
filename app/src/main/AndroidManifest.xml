@@ -4,5 +4,9 @@
     <application android:allowBackup="true" android:label="HealthMate" android:theme="@style/Theme.HealthMate" android:icon="@mipmap/ic_launcher">
         <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter></activity>
         <receiver android:name=".core.notifications.ReminderReceiver" android:exported="false" />
+        <provider
+            android:name=".core.database.HealthRecordsProvider"
+            android:authorities="com.example.healthmate.provider"
+            android:exported="false" />
     </application>
 </manifest>
