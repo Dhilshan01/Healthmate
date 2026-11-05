@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteQueryBuilder
 import android.net.Uri
 import android.content.UriMatcher
 
-/** Read-only ContentProvider API for querying health records and observing changes. */
 class HealthRecordsProvider : ContentProvider() {
     private lateinit var database: HealthMateDatabase
 

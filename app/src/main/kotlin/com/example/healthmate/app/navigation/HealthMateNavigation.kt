@@ -27,7 +27,7 @@ import java.time.LocalDate
     val nav = rememberNavController()
     val state by viewModel.state.collectAsStateWithLifecycle()
     NavHost(navController = nav, startDestination = Routes.HOME) {
-        composable(Routes.HOME) { Shell(nav, 0) { Dashboard(state, { nav.navigate(Routes.REMINDERS) }, { nav.navigate(Routes.GOALS) }) } }
+        composable(Routes.HOME) { Shell(nav, 0) { Dashboard(state, { nav.navigate(Routes.REMINDERS) }, { nav.navigate(Routes.GOALS) }, { steps, calories, water -> viewModel.logToday(steps, calories, water) }) } }
         composable(Routes.HISTORY) { Shell(nav, 1) { History(state.records, { id -> nav.navigate("${Routes.FORM}?id=$id") }, { viewModel.delete(it) }) } }
         composable("${Routes.FORM}?id={id}", arguments = listOf(navArgument("id") { type = NavType.LongType; defaultValue = 0L })) { entry -> Shell(nav, 2) { RecordForm(state.records.firstOrNull { it.id == entry.arguments?.getLong("id") }, onBack = { nav.popBackStack() }, onSave = { record -> if (record.id == 0L) viewModel.add(LocalDate.parse(record.date), record.steps, record.calories, record.water) else viewModel.update(record); nav.popBackStack() }) } }
         composable(Routes.GOALS) { Goals(state.goals, { viewModel.saveGoals(it); nav.popBackStack() }, { nav.popBackStack() }) }
