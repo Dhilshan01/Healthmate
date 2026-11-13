@@ -4,10 +4,6 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-/**
- * Owns the on-device HealthMate SQLite database and its schema migrations.
- * Keep DB_NAME stable so existing user data remains available across app updates.
- */
 class HealthMateDatabase private constructor(context: Context) :
     SQLiteOpenHelper(context.applicationContext, DB_NAME, null, DATABASE_VERSION) {
 
@@ -19,7 +15,6 @@ class HealthMateDatabase private constructor(context: Context) :
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Apply migrations in order so an install can safely upgrade across versions.
         if (oldVersion < 2) {
             createUserProfile(db)
         }
